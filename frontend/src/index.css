@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Styles nếu cần */
+body {
+  background-color: #111827; /* gray-900 */
+  color: white;
+}
