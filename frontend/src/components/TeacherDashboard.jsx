@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import io from "socket.io-client";
-import { PauseCircle, PlayCircle, LogOut, PlusCircle } from "lucide-react";
+import {
+  PauseCircle,
+  PlayCircle,
+  LogOut,
+  PlusCircle,
+  Image as ImageIcon,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -20,6 +26,9 @@ const TeacherDashboard = () => {
     options: ["", "", "", ""],
     answer: "",
   });
+
+  // THÊM: State quản lý việc hiển thị Modal Bằng chứng
+  const [viewingSnapshot, setViewingSnapshot] = useState(null);
 
   useEffect(() => {
     socket.on("teacher_receive_warning", (data) => {
@@ -101,6 +110,7 @@ const TeacherDashboard = () => {
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
             gap: 20,
+            alignContent: "start",
           }}
         >
           {Object.keys(studentStreams).map((svId) => (
@@ -170,6 +180,7 @@ const TeacherDashboard = () => {
           ))}
         </div>
 
+        {/* CỘT LOGS VI PHẠM */}
         <div
           style={{
             background: "white",
@@ -177,10 +188,11 @@ const TeacherDashboard = () => {
             borderRadius: 12,
             height: "80vh",
             overflowY: "auto",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
           }}
         >
           <h3 style={{ borderBottom: "1px solid #EEE", paddingBottom: 10 }}>
-            NHẬT KÝ
+            NHẬT KÝ VI PHẠM
           </h3>
           {logs.map((log) => (
             <div
@@ -188,17 +200,52 @@ const TeacherDashboard = () => {
               style={{
                 fontSize: 13,
                 marginBottom: 12,
-                color:
-                  log.type === "CRITICAL"
-                    ? "#EF4444"
-                    : log.type === "WARNING"
-                      ? "#F59E0B"
-                      : "#10B981",
+                padding: "10px",
+                background: log.type === "CRITICAL" ? "#FEF2F2" : "#FFFBEB",
+                borderLeft: `4px solid ${log.type === "CRITICAL" ? "#EF4444" : "#F59E0B"}`,
+                borderRadius: "0 8px 8px 0",
+                color: log.type === "CRITICAL" ? "#B91C1C" : "#B45309",
               }}
             >
-              <small style={{ color: "#94A3B8" }}>{log.time}</small>
-              <div>
-                <strong>{log.studentId}</strong>: {log.msg}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
+              >
+                <div>
+                  <small style={{ color: "#94A3B8" }}>{log.time}</small>
+                  <div style={{ marginTop: 4 }}>
+                    <strong>{log.studentId}</strong>: {log.msg}
+                  </div>
+                </div>
+
+                {/* THÊM NÚT XEM BẰNG CHỨNG NẾU CÓ SNAPSHOT */}
+                {log.snapshot && (
+                  <button
+                    onClick={() =>
+                      setViewingSnapshot({
+                        src: log.snapshot,
+                        info: `${log.studentId} - ${log.time}`,
+                      })
+                    }
+                    style={{
+                      background: "white",
+                      border: "1px solid #CBD5E1",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      fontSize: "11px",
+                      color: "#334155",
+                    }}
+                  >
+                    <ImageIcon size={12} /> Ảnh
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -275,6 +322,7 @@ const TeacherDashboard = () => {
         </form>
       </div>
 
+      {/* MODAL CẢNH BÁO / DỪNG THI */}
       {modalOpen && (
         <div
           style={{
@@ -341,6 +389,52 @@ const TeacherDashboard = () => {
                 Đồng ý
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PHÓNG TO ẢNH BẰNG CHỨNG GIAN LẬN */}
+      {viewingSnapshot && (
+        <div
+          onClick={() => setViewingSnapshot(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.9)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+            cursor: "zoom-out",
+          }}
+        >
+          <div
+            style={{
+              color: "white",
+              marginBottom: "15px",
+              fontSize: "18px",
+              fontWeight: "bold",
+              background: "#EF4444",
+              padding: "8px 20px",
+              borderRadius: "20px",
+            }}
+          >
+            📸 Bằng chứng: {viewingSnapshot.info}
+          </div>
+          <img
+            src={viewingSnapshot.src}
+            alt="Gian lận"
+            style={{
+              maxWidth: "80%",
+              maxHeight: "80%",
+              border: "4px solid white",
+              borderRadius: "12px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            }}
+          />
+          <div style={{ color: "#94A3B8", marginTop: "15px" }}>
+            (Click ra ngoài để đóng)
           </div>
         </div>
       )}
